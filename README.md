@@ -10,13 +10,12 @@ Step 1:
 Step 2:
 	Open your web browser and navigate to http://10.0.0.10/  	
 	
-	-Login prompt the username and password are “admin”
-	click “Sign In”
+	-Login prompt the username and password are “admin” click “Sign In”
 
 
 
 Step 3:
-	Enter the desired thermostat behavior using the 	sliders and click “Apply Settings”
+	Enter the desired thermostat behavior using the sliders and click “Apply Settings”
 
 
 
@@ -24,10 +23,10 @@ Step 4:
 	Navigate to “Network Parameters”
 	
 	-Enter Wifi SSID and Password and click “submit” 
-	 	If network has connected you should see the Status change to “Connected” otherwise 			double check the credentials
+	 	If network has connected you should see the Status change to “Connected” otherwise double check the credentials
 
 	-Enter the Miner Static IP and click “submit” 
-		If the miner is connected the Status changes to “Hashing” or “Off” depending on the 			state
+		If the miner is connected the Status changes to “Hashing” or “Off” depending on the state
 	
 	-Click the Time Zone dropdown to select your Time Zone and click “submit” 
 
