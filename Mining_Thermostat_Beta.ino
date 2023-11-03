@@ -332,7 +332,7 @@ void loop() {
       if (mqtt_enabled) {
         char mqtt_base_topic_Val[30];
         mqtt_base_topic.toCharArray(mqtt_base_topic_Val, mqtt_base_topic.length() + 1);
-        mqttManager.publishTempSensorData(mqtt_base_topic_Val, tempSensor.getTemperature(), tempSensor.hasError());
+        mqttManager.publishTempSensorData(mqtt_base_topic_Val, tempSensor.getTemperature(), !tempSensor.hasError());
         mqttManager.publishMinerData(mqtt_base_topic_Val, Miner_Offline, Miner_Status, Power);
         mqttManager.publishParameterData(mqtt_base_topic_Val, Uptime, Temp_Low, Temp_High, Min_Off_Time, Min_Run_Time);
       }
