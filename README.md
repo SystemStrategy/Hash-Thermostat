@@ -1,5 +1,7 @@
 # Hash-Thermostat
-Braiins OS Hash Thermostat to regulate indoor temperature by turning miner between pause and reusme
+Braiins OS Hash Thermostat to regulate indoor temperature using the miner API to go between pause and reusme
+
+Tested on an S9 and works, but if you have a newer more supported miner by braiins, there exists the capability to ramp power output up and down. Please put in an issue if you want to dev/test this with me.
 
 Parts used:
 ESP32
