@@ -1,6 +1,14 @@
 # Hash-Thermostat
 Braiins OS Hash Thermostat to regulate indoor temperature by turning miner between pause and reusme
 
+Parts used:
+ESP32
+AHT21
+
+Wiring for AHT21
+GPIO 21 (SDA)
+GPIO 22 (SCL)
+
 
 Hash Thermostat Guide
 Step 1:
