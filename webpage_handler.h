@@ -55,21 +55,15 @@ void handleLogin() {
     return;
   }
   if (server.hasArg("PASSWORD")) {
-    if ((server.arg("PASSWORD") == Login_Password) && (Login_Password == "admin")) {
+    if (server.arg("PASSWORD") == Login_Password) {
       Create_Cookie_Tolken();
-      server.sendHeader("Location", "/Change_Login");
+      if (Login_Password == "admin") server.sendHeader("Location", "/Change_Login");
+      else server.sendHeader("Location", "/");
       server.sendHeader("Cache-Control", "no-cache");
       server.sendHeader("Set-Cookie", Login_Cookie);
       server.send(301);
       Serial.println("Log in Successful");
-      return;
-    } else if (server.arg("PASSWORD") == Login_Password) {
-      Create_Cookie_Tolken();
-      server.sendHeader("Location", "/");
-      server.sendHeader("Cache-Control", "no-cache");
-      server.sendHeader("Set-Cookie", Login_Cookie);
-      server.send(301);
-      Serial.println("Log in Successful");
+      lastLoginTime = millis();
       return;
     }
     msg = "Wrong password! try again.";
