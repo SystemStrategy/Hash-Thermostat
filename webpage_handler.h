@@ -2,8 +2,6 @@ unsigned long lastLoginTime;
 char Login_Cookie[33];
 
 #include "base64.h"
-
-
 void generateRandomBytes(unsigned char* buffer, int len) {
   for (int i = 0; i < len; ++i) {
     buffer[i] = random(256);  // Generate random bytes
@@ -25,7 +23,7 @@ void Create_Cookie_Tolken() {
 bool is_authentified() {
   if (server.hasHeader("Cookie")) {
     String cookie = server.header("Cookie");
-    Serial.println(cookie);
+    //Serial.println(cookie);
     if (cookie.indexOf(Login_Cookie) != -1) {
       long logout_Time = 10;  //minutes
       if (millis() - lastLoginTime > (logout_Time * 60000)) {
@@ -37,7 +35,7 @@ bool is_authentified() {
       return true;
     }
   }
-  Serial.println("Bad Cookie");
+  //Serial.println("Bad Cookie");
   return false;
 }
 
@@ -67,6 +65,7 @@ void handleLogin() {
       return;
     }
     msg = "Wrong password! try again.";
+    Append_Log_File("ERROR - Login Attempt Failed");
     Serial.println("Log in Failed");
   }
   String s = Login_page;
@@ -112,7 +111,6 @@ void Webpage_Filler(String s) {
   s.replace("@@MQTT2@@", mqtt_server);
   s.replace("@@MQTT3@@", String(mqtt_server_port));
   s.replace("@@MQTT4@@", mqtt_username);
-  s.replace("@@MQTT5@@", mqtt_password);
   s.replace("@@MQTT6@@", mqtt_base_topic);
   s.replace("@@MQTT7@@", String(mqtt_update_rate));
 
@@ -257,19 +255,42 @@ void miner_prog() {
   server.sendHeader("Location", "/Network");
   server.send(302, "text/plain", "Updated-- Press Back Button");
 }
+void Command_Miner_On() {
+  if (Miner_Status != 1) {
+    delay(100);
+    Append_Log_File("INFO - Miner On User Command");
+    Miner_Set_On();
+    yield();
+  }
 
+  server.sendHeader("Location", "/");
+  server.send(302, "text/plain", "Updated-- Press Back Button");
+}
 
+void Command_Miner_Off() {
+  if (Miner_Status != 0) {
+    delay(100);
+    Append_Log_File("INFO - Miner Off User Command");
+    Miner_Set_Off();
+    yield();
+  }
+
+  server.sendHeader("Location", "/");
+  server.send(302, "text/plain", "Updated-- Press Back Button");
+}
 void handleSystemUpload() {  // upload a new file to the Filing system
   HTTPUpload& upload = server.upload();
   if (upload.status == UPLOAD_FILE_START) {
     Serial.printf("Update: %s\n", upload.filename.c_str());
     if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {  //start with max available size
       Update.printError(Serial);
+      Append_Log_File("ERROR - OTA Update Failed");
     }
   } else if (upload.status == UPLOAD_FILE_WRITE) {
     /* flashing firmware to ESP*/
     if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
       Update.printError(Serial);
+      Append_Log_File("ERROR - OTA Update Failed");
     }
   } else if (upload.status == UPLOAD_FILE_END) {
     if (Update.end(true)) {  //true to set the size to the current progress
@@ -377,6 +398,16 @@ void Start_Web_Services() {
       miner_prog();  //form action is handled here
     }
   });
+  server.on("/Miner_On", []() {
+    if (Check_Auth()) {
+      Command_Miner_On();
+    }
+  });
+  server.on("/Miner_Off", []() {
+    if (Check_Auth()) {
+      Command_Miner_Off();
+    }
+  });
   server.on("/thermostat_params", []() {
     if (Check_Auth()) {
       therm_prog();  //form action is handled here
@@ -441,7 +472,7 @@ void Start_Web_Services() {
   server.on("/Clear_Log", []() {
     if (Check_Auth()) {
       deleteFile(SPIFFS, "/Log.txt");
-      server.sendHeader("Location", "/");
+      server.sendHeader("Location", "/Log");
       server.send(302, "text/plain", "Updated-- Press Back Button");
     }
   });
