@@ -235,6 +235,7 @@ const char Web_Style[] PROGMEM = R"=====(
     </style>
 )=====";
 
+
 const char General_page[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html>
@@ -433,7 +434,7 @@ const char Logging_page[] PROGMEM = R"=====(
             }
         
             // Periodically update the sensor value (you can use other events or triggers)
-            setInterval(updateSensorValue, 2000); // Update every 2 secon
+            setInterval(updateSensorValue, 2000); // Update every 2 seconds
 
 
         });
@@ -573,6 +574,16 @@ const char Configuration_page[] PROGMEM = R"=====(
             <div class="apply-buttons">
                 <form method='POST' action="/reboot">
                     <input class="button" type="submit" value="Reboot">
+                </form>
+            </div>
+            <div class="apply-buttons">
+                <form method='POST' action="/Miner_On">
+                    <input class="button" type="submit" value="Miner On">
+                </form>
+            </div>
+            <div class="apply-buttons">
+                <form method='POST' action="/Miner_Off">
+                    <input class="button" type="submit" value="Miner Off">
                 </form>
             </div>
             <div class="apply-buttons">
@@ -797,7 +808,7 @@ const char MQTT_page[] PROGMEM = R"=====(
             </tr>
             <tr>
                 <td>MQTT Password</td>
-                <td><input type="password" name="MQTT5" value="@@MQTT5@@"></td>
+                <td><input type="password" name="MQTT5" value="xxxxxxx"></td>
             </tr>
             <tr>
                 <td>MQTT Base Topic</td>
