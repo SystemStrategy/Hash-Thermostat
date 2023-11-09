@@ -22,7 +22,13 @@ GPIO 04 with 4.7k pullup resistor to Vcc(3.3v)
 
 
 
-Hash Thermostat Guide
+
+
+
+
+
+Hash Thermostat Quick Start Guide:
+
 Step 1:
 	Connect to the WIFI access point “AP_Thermostat” the password is “StackSats!”
 	Note: WIFI access point deactivates when rebooted and device connects to network
