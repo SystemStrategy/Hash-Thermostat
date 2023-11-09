@@ -1,0 +1,29 @@
+Additional Features to Dev:
+
+Log Operational Data
+  - Date
+  - Temperature
+  - Miner State
+  - Miner Power
+
+Display trend of Operational Data on webpage
+
+Time Scheduling tool
+  - Schedule
+    - User Selection
+      - Daily
+      - Weekdays
+      - Weekends
+      - Custom
+  - Time Window(s)
+    - Allow user to add time onto 24h schedule
+    - 5 minute intervals    
+  - Schedule Command Options
+    - Miner ON
+    - Miner OFF
+    - Miner follows thermostat range control
+
+
+PI Control Loop for Newer Machines
+
+Remove 8kb limit from Log file
