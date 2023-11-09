@@ -1,6 +1,6 @@
 
 
-char Version[12] = "Dev V1.03";
+char Version[12] = "Dev V1.05";
 
 bool Miner_Offline = false;
 int Miner_Status;  //0=Off,1=ON
@@ -9,9 +9,9 @@ String Miner_IP;
 String Miner_Status_str = "Offline";
 int Temp_Low = 71;
 int Temp_High = 80;
-int Min_Off_Time = 1;
-int Min_Run_Time = 1;
-String Login_Password;
+int Min_Off_Time = 10;
+int Min_Run_Time = 10;
+String Login_Password = "admin";
 
 String Wifi_SSID;
 String Wifi_Password;
@@ -31,6 +31,7 @@ bool Miner_Offline_Now;
 bool last_Miner_Offline;
 bool last_MQTT_Connected;
 
+bool last_Temp_Sensor_Error;
 
 bool Wifi_Station_Mode = false;
 
@@ -40,7 +41,7 @@ struct tm timeinfo;
 String NTP_Server = "pool.ntp.org";
 int UTC_Offset;
 int EN_DST;
-int TimeID = 6;
+int TimeID = 5;
 
 unsigned long Uptime = 0;
 long Miner_Poll;
@@ -75,10 +76,6 @@ TemperatureSensor tempSensor;
 WebServer server(80);  //Server on port 80
 #include "file_handler.h"
 #include "API.h"
-
-IPAddress ip(10, 0, 0, 10);
-IPAddress gateway(10, 0, 0, 1);
-IPAddress subnet(255, 255, 255, 0);
 
 #include "MQTT_Handler.h";
 MQTTManager mqttManager;
@@ -136,12 +133,11 @@ void setup() {
 
 
   mqtt_username.toCharArray(mqtt_username_Val, mqtt_username.length() + 1);
-  mqtt_password.toCharArray(mqtt_password_Val, mqtt_password.length() + 1);  
+  mqtt_password.toCharArray(mqtt_password_Val, mqtt_password.length() + 1);
   mqttManager.setcreds(mqtt_username_Val, mqtt_username_Val, mqtt_password_Val);
 
 
   if (!Wifi_Station_Mode) {
-    WiFi.softAPConfig(ip, gateway, subnet);
     WiFi.mode(WIFI_AP);
     WiFi.softAP("AP_Thermostat", "StackSats!");  //Configuration Access Point
   } else {
@@ -218,7 +214,7 @@ void setup() {
 
 
 
-  Serial.println("WiFi.localIP()");
+  Serial.println(WiFi.localIP());
 }
 
 
@@ -226,6 +222,8 @@ void loop() {
 
   now = millis();
   server.handleClient();  //Handle client requests
+  yield();
+  delay(100);
 
   if (now - lastUptime > 1000) {
     lastUptime = now;
@@ -239,7 +237,6 @@ void loop() {
 
     tempSensor.measureTemperature();
 
-    bool last_Temp_Sensor_Error;
 
     if ((last_Temp_Sensor_Error != tempSensor.hasError()) && tempSensor.hasError()) Append_Log_File("ERROR - Temperature Sensor Offline");
     else if ((last_Temp_Sensor_Error != tempSensor.hasError()) && !tempSensor.hasError()) Append_Log_File("INFO - Temperature Sensor Online");
