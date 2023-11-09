@@ -1,4 +1,7 @@
 # Hash-Thermostat
+
+![alt text](https://github.com/SystemStrategy/Hash-Thermostat/blob/main/3d%20STL/Guts.png)
+
 Braiins OS Hash Thermostat to regulate indoor temperature using the miner API to go between pause and reusme
 
 Tested on an S9 and works, but if you have a newer more supported miner by braiins, there exists the capability to ramp power output up and down. Please put in an issue if you want to dev/test this with me.
