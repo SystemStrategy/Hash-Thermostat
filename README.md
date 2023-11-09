@@ -4,12 +4,19 @@ Braiins OS Hash Thermostat to regulate indoor temperature using the miner API to
 Tested on an S9 and works, but if you have a newer more supported miner by braiins, there exists the capability to ramp power output up and down. Please put in an issue if you want to dev/test this with me.
 
 Parts used:
-ESP32
+ESP32S2 Mini - https://www.wemos.cc/en/latest/s2/s2_mini.html
+
+Temperature Probes Options:
+DS18B20
 AHT21
 
 Wiring for AHT21
 GPIO 21 (SDA)
 GPIO 22 (SCL)
+
+Wiring for DS18B20
+GPIO 04 with 4.7k pullup resistor to Vcc(3.3v)
+
 
 
 Hash Thermostat Guide
@@ -18,19 +25,14 @@ Step 1:
 	Note: WIFI access point deactivates when rebooted and device connects to network
 
 Step 2:
-	Open your web browser and navigate to http://10.0.0.10/  	
-	
+	Open your web browser and navigate to http://194.168.4.1 or http://thermostat.local/   		
 	-Login prompt the username and password are “admin” click “Sign In”
-
-
 
 Step 3:
 	Enter the desired thermostat behavior using the sliders and click “Apply Settings”
 
-
-
 Step 4:
-	Navigate to “Network Parameters”
+	Navigate to "Configuration" then “Network Parameters”
 	
 	-Enter Wifi SSID and Password and click “submit” 
 	 	If network has connected you should see the Status change to “Connected” otherwise double check the credentials
