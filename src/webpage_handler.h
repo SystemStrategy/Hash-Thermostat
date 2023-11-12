@@ -81,7 +81,7 @@ void handleNotFound() {
 
 
 void Webpage_Filler(String s) {
-  String data_clicked = "true";
+  s.replace("@@<style>@@", Web_Style);
 
   if (WiFi.status() == WL_CONNECTED) {
     s.replace("@@Wifi1@@", "Connected");
@@ -124,7 +124,7 @@ void Webpage_Filler(String s) {
   s.replace("@@Version@@", Version);
 
 
-  s.replace("@@<style>@@", Web_Style);
+  delay(10);
   Current_Webpage = s;
 }
 
@@ -180,6 +180,10 @@ void Set_Wifi() {
   Serial.println(attempts);
   while (WiFi.status() != WL_CONNECTED) {
     delay(100);
+    digitalWrite(LED_Pin, LOW);
+    delay(100);
+    digitalWrite(LED_Pin, HIGH);
+    yield();
     count++;
     Serial.print(".");
     if (count >= 50) {  //after 3 seconds of no connection give up
@@ -249,8 +253,7 @@ void wifi_prog() {
 }
 void miner_prog() {
   Miner_IP = server.arg("Miner_IP");
-  Get_Miner_Status();
-  Save_Parameters_File();
+  if(Get_Miner_Status())  Save_Parameters_File();
   delay(100);
   server.sendHeader("Location", "/Network");
   server.send(302, "text/plain", "Updated-- Press Back Button");
