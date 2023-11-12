@@ -1,7 +1,9 @@
 
 
-char Version[12] = "Dev V1.05";
+char Version[12] = "Dev V1.06";
 
+int Boot_Button = 0;
+int LED_Pin = 15;
 bool Miner_Offline = false;
 int Miner_Status;  //0=Off,1=ON
 int Power;
@@ -26,6 +28,7 @@ int mqtt_update_rate = 10;  //seconds
 
 
 
+bool Poll_Miner;
 bool last_Miner_Status;
 bool Miner_Offline_Now;
 bool last_Miner_Offline;
@@ -44,7 +47,7 @@ int EN_DST;
 int TimeID = 5;
 
 unsigned long Uptime = 0;
-long Miner_Poll;
+long Miner_Poll = 1;
 unsigned long Wifi_Retry_Timer = 0;
 unsigned long lastUptime = 0;
 unsigned long lastMsg = 0;
@@ -88,21 +91,42 @@ String Current_Webpage;
 
 
 void setup_wifi() {
-  if (WiFi.status() != WL_CONNECTED) {
-    int count = 0;
-    int attempts = 0;
-    char SSID_Val[20];
-    char Pass_Val[30];
-    Wifi_SSID.toCharArray(SSID_Val, Wifi_SSID.length() + 1);
-    Wifi_Password.toCharArray(Pass_Val, Wifi_Password.length() + 1);
-    WiFi.begin(SSID_Val, Pass_Val);
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(50);
-      count++;
-      if (count >= 100) {  //after 5 seconds of no connection give up
-        delay(10000);
+  char SSID_Val[20];
+  char Pass_Val[30];
+  Wifi_SSID.toCharArray(SSID_Val, Wifi_SSID.length() + 1);
+  Wifi_Password.toCharArray(Pass_Val, Wifi_Password.length() + 1);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(SSID_Val, Pass_Val);  //Connect to your WiFi router
+  int count = 0;
+  int attempts = 1;
+
+  Serial.println("");
+  Serial.print("Attempt : ");
+  Serial.println(attempts);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(100);
+    digitalWrite(LED_Pin, LOW);
+    delay(100);
+    digitalWrite(LED_Pin, HIGH);
+    count++;
+    Serial.print(".");
+    if (count >= 50) {  //after 3 seconds of no connection give up
+      attempts++;
+      if (attempts >= 3) {
         break;
       }
+      Serial.println("");
+      Serial.print("Attempt : ");
+      Serial.println(attempts);
+      WiFi.disconnect();
+      while (WiFi.status() == WL_CONNECTED) {
+        delay(100);
+        count++;
+        if (count >= 30) break;
+      }
+      WiFi.begin(SSID_Val, Pass_Val);  //Connect to your WiFi router
+      count = 0;
     }
   }
 }
@@ -120,12 +144,16 @@ void reconnect_wifi() {
 
 void setup() {
   Serial.begin(115200);
+  pinMode(Boot_Button, INPUT);
+  pinMode(Boot_Button, INPUT_PULLUP);
+  pinMode(LED_Pin, OUTPUT);
   delay(1000);
   if (!SPIFFS.begin(FORMAT_LITTLEFS_IF_FAILED)) {
     Serial.println("LITTLEFS Mount Failed");
     File_Avaliable = false;
     return;
   } else File_Avaliable = true;
+
   Read_Parameters_File(SPIFFS, "/Parameters.txt");
 
   mqtt_server.toCharArray(mqtt_server_Val, mqtt_server.length() + 1);
@@ -140,50 +168,15 @@ void setup() {
   if (!Wifi_Station_Mode) {
     WiFi.mode(WIFI_AP);
     WiFi.softAP("AP_Thermostat", "StackSats!");  //Configuration Access Point
-  } else {
-    char SSID_Val[20];
-    char Pass_Val[30];
-    Wifi_SSID.toCharArray(SSID_Val, Wifi_SSID.length() + 1);
-    Wifi_Password.toCharArray(Pass_Val, Wifi_Password.length() + 1);
+  } else setup_wifi();
 
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(SSID_Val, Pass_Val);  //Connect to your WiFi router
-
-    int count = 0;
-    int attempts = 1;
-
+  if (WiFi.status() == WL_CONNECTED) {
     Serial.println("");
-    Serial.print("Attempt : ");
-    Serial.println(attempts);
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(100);
-      count++;
-      Serial.print(".");
-      if (count >= 50) {  //after 3 seconds of no connection give up
-        attempts++;
-        if (attempts >= 3) {
-          break;
-        }
-        Serial.println("");
-        Serial.print("Attempt : ");
-        Serial.println(attempts);
-        WiFi.disconnect();
-        while (WiFi.status() == WL_CONNECTED) {
-          delay(100);
-          count++;
-          if (count >= 30) break;
-        }
-        WiFi.begin(SSID_Val, Pass_Val);  //Connect to your WiFi router
-        count = 0;
-      }
-    }
-    if (WiFi.status() == WL_CONNECTED) {
-      Serial.println("");
-      Set_NTP_Server();
-      printLocalTime();
-      delay(1000);
-    }
+    Set_NTP_Server();
+    printLocalTime();
+    delay(1000);
   }
+
   MDNS.begin("thermostat");
   Start_Web_Services();
   Create_Cookie_Tolken();
@@ -220,6 +213,15 @@ void setup() {
 
 void loop() {
 
+  digitalWrite(LED_Pin, HIGH);
+  if (digitalRead(Boot_Button) == false) {  //Enter into AP Config
+    deleteFile(SPIFFS, "/Log.txt");
+    deleteFile(SPIFFS, "/Parameters.txt");
+    digitalWrite(LED_Pin, LOW);
+    delay(2000);
+    ESP.restart();
+  }
+
   now = millis();
   server.handleClient();  //Handle client requests
   yield();
@@ -251,10 +253,11 @@ void loop() {
 
     if (now - lastMsg > (10000 * Miner_Poll)) {
       lastMsg = now;
-
       if (WiFi.status() == WL_CONNECTED) {
-        if (Get_Miner_Status()) Miner_Offline_Now = true;
-        else {
+
+        if (Get_Miner_Status()) {
+          Miner_Offline_Now = true;
+        } else {
           Miner_Offline_Now = false;
           Miner_Offline_Timer = now;
         }
@@ -272,21 +275,20 @@ void loop() {
 
         if (now - Miner_Offline_Timer > 20000) {
           Miner_Offline = true;
-          Miner_Poll = 2;
+          Miner_Poll = 3;
         } else {
           Miner_Poll = 1;
           Miner_Offline = false;
+          if (Miner_Status == 0) lastRun = now;
+          else if (Miner_Status == 1) lastOff = now;
         }
-
-
-        if (Miner_Status == 0) lastRun = now;
-        else if (Miner_Status == 1) lastOff = now;
 
         if (!tempSensor.hasError()) {
           float Actual_Temp = tempSensor.getTemperature();
           if ((Actual_Temp < Temp_High) && (Actual_Temp > Temp_Low)) Time_Validation = now;
 
           if (!Miner_Offline_Now) {
+            Serial.println("Command Start");
             if (now - Time_Validation > (5 * 60000)) {  //5 minute delay before turning on or off to prevent miss-reads or false conditions
               if (now - lastRun > (Min_Run_Time * 60000)) {
                 //Allowed to turn Off
@@ -325,13 +327,14 @@ void loop() {
             }
           }
         }
-      }
-      if (mqtt_enabled) {
-        char mqtt_base_topic_Val[30];
-        mqtt_base_topic.toCharArray(mqtt_base_topic_Val, mqtt_base_topic.length() + 1);
-        mqttManager.publishTempSensorData(mqtt_base_topic_Val, tempSensor.getTemperature(), !tempSensor.hasError());
-        mqttManager.publishMinerData(mqtt_base_topic_Val, Miner_Offline, Miner_Status, Power);
-        mqttManager.publishParameterData(mqtt_base_topic_Val, Uptime, Temp_Low, Temp_High, Min_Off_Time, Min_Run_Time);
+
+        if (mqtt_enabled) {
+          char mqtt_base_topic_Val[30];
+          mqtt_base_topic.toCharArray(mqtt_base_topic_Val, mqtt_base_topic.length() + 1);
+          mqttManager.publishTempSensorData(mqtt_base_topic_Val, tempSensor.getTemperature(), !tempSensor.hasError());
+          mqttManager.publishMinerData(mqtt_base_topic_Val, Miner_Offline, Miner_Status, Power);
+          mqttManager.publishParameterData(mqtt_base_topic_Val, Uptime, Temp_Low, Temp_High, Min_Off_Time, Min_Run_Time);
+        }
       }
     }
     yield();
