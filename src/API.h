@@ -8,7 +8,6 @@ WiFiClient client1;
 bool Open_Socket() {
   bool Socket_Open = false;
   char Miner_IP_Val[30];
-  client1.setTimeout(5000);
   Miner_IP.toCharArray(Miner_IP_Val, Miner_IP.length() + 1);
   if (client1.connect(Miner_IP_Val, 4028)) {
     Socket_Open = true;
