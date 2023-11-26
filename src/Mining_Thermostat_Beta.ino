@@ -1,6 +1,6 @@
 
 
-char Version[12] = "Dev V1.06";
+char Version[12] = "Dev V1.07";
 
 int Boot_Button = 0;
 int LED_Pin = 15;
@@ -327,14 +327,23 @@ void loop() {
             }
           }
         }
+      }
+    }
+    if (mqtt_enabled) {
+      if (!mqttManager.checkConnection()) {
+        mqttManager.setServer(mqtt_server_Val, mqtt_server_port);
+        mqttManager.setcreds(mqtt_username_Val, mqtt_username_Val, mqtt_password_Val);
+      }
+      else if (now - lastMQTT > (mqtt_update_rate * 1000)) {
+        lastMQTT = now;
 
-        if (mqtt_enabled) {
-          char mqtt_base_topic_Val[30];
-          mqtt_base_topic.toCharArray(mqtt_base_topic_Val, mqtt_base_topic.length() + 1);
-          mqttManager.publishTempSensorData(mqtt_base_topic_Val, tempSensor.getTemperature(), !tempSensor.hasError());
-          mqttManager.publishMinerData(mqtt_base_topic_Val, Miner_Offline, Miner_Status, Power);
-          mqttManager.publishParameterData(mqtt_base_topic_Val, Uptime, Temp_Low, Temp_High, Min_Off_Time, Min_Run_Time);
-        }
+
+        char mqtt_base_topic_Val[30];
+        mqtt_base_topic.toCharArray(mqtt_base_topic_Val, mqtt_base_topic.length() + 1);
+
+        mqttManager.publishTempSensorData(mqtt_base_topic_Val, tempSensor.getTemperature(), !tempSensor.hasError());
+        mqttManager.publishMinerData(mqtt_base_topic_Val, Miner_Offline, Miner_Status, Power);
+        mqttManager.publishParameterData(mqtt_base_topic_Val, Uptime, Temp_Low, Temp_High, Min_Off_Time, Min_Run_Time);
       }
     }
     yield();
